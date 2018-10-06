@@ -11,128 +11,116 @@ $(function () {
             }
         });
     }
-
     function carregaPaginaAmigos(id) {
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/summoner/v3/summoners/" + id + "?api_key=" + Token,
-            method: "GET",
-            async: false,
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (response) {
-                $('.main').html('');
-                $('.main').append(`
-                    <link rel="stylesheet" href="css/amigos.css">
-                    <div class="eloP">
-                        <span id="IconeAA"><img src="http://ddragon.leagueoflegends.com/cdn/${version}/img/profileicon/${response.profileIconId}.png"></span>
-                        <div id="nomeAA">${response.name}</div>
-                        <br>
-                        <br>
-                        <span id="levelAA">Level ${response.summonerLevel}</span>
-                `);
+            success: function () {
+                friend1 = JSON.parse(localStorage.getItem('tbAmigos'))
+                friend2 = JSON.parse(friend1[id])
+                $('#IconeAA').html('<img src="http://ddragon.leagueoflegends.com/cdn/' + version + '/img/profileicon/' + friend2.profileIconId + '.png">')
+                $('#nomeAA').html(friend2.name)
+                $('#levelAA').html(friend2.summonerLevel)
             },
             error: function () {
                 console.log('Erro na parte de usuario')
             }
         });
+        if ($('#IconeAA').html() == ""){
+            carregaPaginaAmigos()
+        }
     }
     function carregaPaginaElo(id) {
+        friend1 = JSON.parse(localStorage.getItem('tbAmigos'))
+        friend2 = JSON.parse(friend1[id])
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/league/v3/positions/by-summoner/" + id + "?api_key=" + Token,
-            method: "GET",
+            url: "php/tier.php",
+            type: 'POST',
+            data: {
+                login: friend2.id,
+                local: "br1"
+            },
             beforeSend: function () {
                 $('#carregando').show();
             },
             success: function (resp) {
-                $.each(resp, function (indice, elo) {
-                    $('.main').append(`
-                    <div class="eloM">
-                            <span class="eloIconeAA"></span>
-                            <span class="ranqueado">
-                            <span class="queue">${elo.queueType}</span>
-                            </span>
-                            <br>
-                            <span class="eloAA">${elo.tier}</span>
-                            <span class="posicaoAA">${elo.rank}</span>
-                            <br>
-                            <span class="pontosA">PDL ${elo.leaguePoints}</span>
-                            <br>
-                            </div>
-                `);
-                });
+                localStorage.setItem('tierAmigo', resp);
+                eloA = JSON.parse(localStorage.getItem('tierAmigo'));
+                if (eloA[0].queueType == undefined) {
+                    return false;
+                } else if (eloA[0].queueType == "RANKED_SOLO_5x5") {
+                    $('.queue').html(eloA[0].queueType)
+                    $('.eloAA').html(eloA[0].tier)
+                    $('.posicaoAA').html(eloA[0].rank)
+                    $('.pontosA').html(eloA[0].leaguePoints)
+                } else if (eloA[1].queueType == "RANKED_SOLO_5x5") {
+                    $('.queue').html(eloA[1].queueType)
+                    $('.eloAA').html(eloA[1].tier)
+                    $('.posicaoAA').html(eloA[1].rank)
+                    $('.pontosA').html(eloA[1].leaguePoints)
+                }
                 elo();
             },
             error: function () {
                 console.log('Erro na parte de usuario')
             }
         });
+
         function elo() {
-            if ($('.eloAA:eq(0)').html() == "SILVER") { // mostra o icone de acordo com a posição no rank
-                $('.eloIconeAA:eq(0)').html('<img src="icon/silver.png">');
-            } else if ($('.eloAA:eq(0)').html() == "GOLD") {
-                $('.eloIconeAA:eq(0)').html('<img src="icon/gold.png">');
-            } else if ($('.eloAA:eq(0)').html() == "BRONZE") {
-                $('.eloIconeAA:eq(0)').html('<img src="icon/bronze.png">');
-            } else if ($('.eloAA:eq(0)').html() == "diamond") {
-                $('.eloIconeAA:eq(0)').html('<img src="icon/diamond.png">');
-            } else if ($('.eloAA:eq(0)').html() == "master") {
-                $('.eloIconeAA:eq(0)').html('<img src="icon/master.png">');
+            if ($('.eloAA').html() == "SILVER") { // mostra o icone de acordo com a posição no rank
+                $('.eloIconeAA').html('<img src="icon/silver.png">');
+            } else if ($('.eloAA').html() == "GOLD") {
+                $('.eloIconeAA').html('<img src="icon/gold.png">');
+            } else if ($('.eloAA').html() == "BRONZE") {
+                $('.eloIconeAA').html('<img src="icon/bronze.png">');
+            } else if ($('.eloAA').html() == "diamond") {
+                $('.eloIconeAA').html('<img src="icon/diamond.png">');
+            } else if ($('.eloAA').html() == "master") {
+                $('.eloIconeAA').html('<img src="icon/master.png">');
             } else {
-                $('.eloIconeAA:eq(0)').html('<img src="icon/default.png">');
+                $('.eloIconeAA').html('<img src="icon/default.png">');
             }
 
-            if ($('.eloAA:eq(1)').html() == "SILVER") { // mostra o icone de acordo com a posição no rank
-                $('.eloIconeAA:eq(1)').html('<img src="icon/silver.png">');
-            } else if ($('.eloAA:eq(1)').html() == "GOLD") {
-                $('.eloIconeAA:eq(1)').html('<img src="icon/gold.png">');
-            } else if ($('.eloAA:eq(1)').html() == "BRONZE") {
-                $('.eloIconeAA:eq(1)').html('<img src="icon/bronze.png">');
-            } else if ($('.eloAA:eq(1)').html() == "diamond") {
-                $('.eloIconeAA:eq(1)').html('<img src="icon/diamond.png">');
-            } else if ($('.eloAA:eq(1)').html() == "master") {
-                $('.eloIconeAA:eq(1)').html('<img src="icon/master.png">');
-            } else {
-                $('.eloIconeAA:eq(1)').html('<img src="icon/default.png">');
+            if ($('.queue').html() == 'RANKED_SOLO_5x5') {
+                $('.queue').html("Ranqueada Solo")
+            } else if
+            ($('.queue').html() == 'RANKED_FLEX_SR') {
+                $('.queue').html("Ranqueada Flex")
             }
 
-            if ($('.ranqueado:eq(0) span').html() == 'RANKED_SOLO_5x5') {
-                $('.ranqueado:eq(0) span').html("Ranqueada Solo")
-            } else if
-            ($('.ranqueado:eq(0) span').html() == 'RANKED_FLEX_SR') {
-                $('.ranqueado:eq(0) span').html("Ranqueada Flex")
-            }
-            if ($('.ranqueado:eq(1) span').html() == 'RANKED_SOLO_5x5') {
-                $('.ranqueado:eq(1) span').html("Ranqueada Solo")
-            } else if
-            ($('.ranqueado:eq(1) span').html() == 'RANKED_FLEX_SR') {
-                $('.ranqueado:eq(1) span').html("Ranqueada Flex")
-            }
         }
     }
-    // 
+    //
     function imgPersonagem(id) {
+        friend1 = JSON.parse(localStorage.getItem('tbAmigos'))
+        friend2 = JSON.parse(friend1[id])
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/champion-mastery/v3/champion-masteries/by-summoner/" + id + "?api_key=" + Token,
-            method: "GET",
+            url: "php/championM.php",
+            type: 'POST',
+            data: {
+                login: friend2.id,
+                local: "br1"
+            },
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (resp) {
-                $.each(resp, function (indice, champ) {
-                    $('.main').append('<div id="art"><img src="http://www.stelar7.no/cdragon/latest/uncentered-splash-art/' + champ.championId + '/0.png"></div>');
-                    $('#carregando').hide();
-                    return false;
-                })
+            success: function (champA) {
+                localStorage.setItem('champion', champA);
+                championA = JSON.parse(localStorage.getItem('champion'));
+                $('#art').html('<img src="http://www.stelar7.no/cdragon/latest/uncentered-splash-art/' + championA[0].championId + '/0.png">');
+                $('#style').html('<link rel="stylesheet" href="css/amigos.css">')
+                $('#carregando').hide();
             },
             error: function () {
                 console.log('Erro na parte de usuario')
             }
         });
     }
-    $(document).ready(function () {
+    setTimeout(function () {
         carregaPaginas('home');
-    });
+        myPageAmigos();
+    }, 2000);
     $('#perfil').on(`click`, function () {
         carregaPaginas('perfil');
     });
@@ -148,9 +136,13 @@ $(function () {
     $('#atualizacoes').on(`click`, function () {
         carregaPaginas('atualizacoes');
     });
-    $('.amigos').on(`click`, function () {
-        carregaPaginaElo($(this).attr('alt'));
-        carregaPaginaAmigos($(this).attr('alt'));
-        imgPersonagem($(this).attr('alt'));
-    });
+
+    function myPageAmigos() {
+        $('.amigos').on(`click`, function () {
+            carregaPaginas('amigos');
+            carregaPaginaAmigos($(this).attr('alt'))
+            carregaPaginaElo($(this).attr('alt'))
+            imgPersonagem($(this).attr('alt'));
+        })
+    }
 });

@@ -8,17 +8,18 @@ $(function () {
     function amigos() {
         $('#lista table tbody').html(''); //reseta a pagina
         for (obj in tbAmigos) {
-            let linha = tbAmigos[obj];// chama amigos pela linha
+            timea = 0;
             $.ajax({
-                async: false,
-                url: "https://br1.api.riotgames.com/lol/summoner/v3/summoners/by-name/" + linha.name + "?api_key=" + Token,
-                method: "GET",
-                success: function (response) {
-                    $('#lista table tbody').append('<td id="iconeA"><a class="amigos" href="#" title="' + response.accountId + '" alt="' + response.id + '"><img src="http://ddragon.leagueoflegends.com/cdn/' + version + '/img/profileicon/' + response.profileIconId + '.png"></a></td>');
-                    $('#lista table tbody').append('<td id="friend"><a class="amigos" href="#" title="' + response.accountId + '" alt="' + response.id + '">' + response.name + '</a></td>');
-                    $('#lista table tbody').append('<td id="levelA"><a class="amigos" href="#" title="' + response.accountId + '" alt="' + response.id + '">' + "Level " + response.summonerLevel + '</a></td>');
+                success: function () {
+                    afriend = JSON.parse(localStorage.getItem('tbAmigos'))
+                    response = JSON.parse(afriend[timea])
+                    $('#lista table tbody').append('<td id="iconeA"><a class="amigos" href="#" title="' + response.id + '" alt="' + [timea] + '"><img src="http://ddragon.leagueoflegends.com/cdn/' + version + '/img/profileicon/' + response.profileIconId + '.png"></a></td>');
+                    $('#lista table tbody').append('<td id="friend"><a class="amigos" href="#" title="' + response.id + '" alt="' + [timea] + '">' + response.name + '</a></td>');
+                    $('#lista table tbody').append('<td id="levelA"><a class="amigos" href="#" title="' + response.id + '" alt="' + [timea] + '">' + "Level " + response.summonerLevel + '</a></td>');
                     $('#lista table tbody').append('<td id="deletarA"><button class="deletar" id="deletar" alt="' + response.id + '"><i class="fas fa-times"></i></button></a></td>');
                     $('#lista table tbody').append('<tr>');
+                    timea++;
+                    del()
                 },
                 error: function () {
                     console.log('Erro na parte de usuario')
@@ -27,9 +28,13 @@ $(function () {
         };
     };
     //deletar pela id
+    function del(){
+        deleta();
+        return false;
+    }
     function deleta() {
         $('.deletar').on('click', function () {
-            let id = $(this).attr('alt');
+            let delet = $(this).attr('alt');
             $('.dialog').fadeIn('fast', function () {
                 $('.ajaxmsg').html(
                     '<strong> Deletar esse amigo? </strong>' +
@@ -39,7 +44,9 @@ $(function () {
                 $('#sim').on('click', function () {
                     tbAmigos = JSON.parse(localStorage.getItem('tbAmigos'));
                     for (linha in tbAmigos) {
-                        if (tbAmigos[linha].id == id) {
+                        console.log(JSON.parse(tbAmigos[linha]).id)
+                        console.log(JSON.parse(tbAmigos[linha]).id == delet)
+                        if (JSON.parse(tbAmigos[linha]).id == delet) {
                             tbAmigos.splice(linha, 1);
                         }
                     }
@@ -63,62 +70,47 @@ $(function () {
     listarContatos();
     amigos();
     deleta();
-    function consultaApi(nome) {
-        var retorno = false;
+    function consultaApi() {
         $.ajax({
-            async: false,
-            url: "https://br1.api.riotgames.com/lol/summoner/v3/summoners/by-name/" + nome + "?api_key=" + Token,
-            method: "GET",
-            success: function (response) {
-                retorno = response;
+            url: "php/summoner.php",
+            type: 'POST',
+            data: {
+                login: $('#add').val(),
+                local: "br1"
+            },
+            success: function (friend) {
+                event.preventDefault();
+                let contato = friend;
+                var tbAmigos;
+                if (localStorage.getItem('tbAmigos')) {
+                    tbAmigos = JSON.parse(localStorage.getItem('tbAmigos'));
+                } else {
+                    tbAmigos = [];
+                }
+                tbAmigos.push(contato);
+                localStorage.setItem('tbAmigos', JSON.stringify(tbAmigos));
+                $('#add').val('');
+                $('.dialog').fadeIn('fast', function () {
+                    $('.ajaxmsg').html(
+                        '<strong> Amigo Adicionado com sucesso! </strong>' +
+                        '<button id="okNick">Ok</button>'
+                    ).fadeIn('slow');
+                    $('#okNick').on('click', function () {
+                        $('.ajaxmsg').fadeOut();
+                        $('.dialog').fadeOut();
+                        amigos();
+                        location.reload();
+                    });
+                });
             },
             error: function () {
                 console.log('Erro na parte de usuario')
             }
         });
-        return retorno;
     };
 
     function cadastrarContatos() { // cadastra no local storage
-        let objPessoa = consultaApi($('#add').val());
-        let cadastro;
-        if (!objPessoa) {
-            $('.dialog').fadeIn('fast', function () {
-                $('.ajaxmsg').html(
-                    '<strong> Amigo não encontrado! </strong>' +
-                    '<button id="okNick">Ok</button>'
-                ).fadeIn('slow');
-                $('#okNick').on('click', function () {
-                    $('.ajaxmsg').fadeOut();
-                    $('.dialog').fadeOut();
-                    amigos();
-                    location.reload();
-                });
-            });
-            $('#add').val('');
-            return false;
-        } else {
-            cadastro = objPessoa;
-        };
-        tbAmigos.push(cadastro);
-        localStorage.setItem('tbAmigos',
-            JSON.stringify(tbAmigos));
-        listarContatos();
-        $('#add').val('');
-        $('.dialog').fadeIn('fast', function () {
-            $('.ajaxmsg').html(
-                '<strong> Amigo Adicionado com sucesso! </strong>' +
-                '<button id="okNick">Ok</button>'
-            ).fadeIn('slow');
-            $('#okNick').on('click', function () {
-                $('.ajaxmsg').fadeOut();
-                $('.dialog').fadeOut();
-                amigos();
-                location.reload();
-            });
-        });
-
-        $('#lista').show();
+        consultaApi()
     };
 
     $('#formCadastro').submit(function () {
@@ -134,5 +126,4 @@ $(function () {
         tbAmigos = [];
         $('#lista').hide();
     };
-
 });

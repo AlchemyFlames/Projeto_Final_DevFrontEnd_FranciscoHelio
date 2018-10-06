@@ -2,12 +2,11 @@ $(function () {
     perfil();
     function perfil() { // perfil principal
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/summoner/v3/summoners/by-name/" + localStorage.getItem('lolnick') + "?api_key=" + Token, //site da api completa com o nick no local storage + a chave
-            method: "GET",
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (responsePerfil) {
+            success: function () {
+                responsePerfil = JSON.parse(localStorage.getItem('player'));
                 $('#carregando').hide();
                 $('#levelPerfil').html("Level " + responsePerfil.summonerLevel);
                 $('#nomePerfil').html(responsePerfil.name);
@@ -21,25 +20,22 @@ $(function () {
     }
     function tier() { //chamado da api onde mostra os pontos
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/league/v3/positions/by-summoner/" + $(".nome").attr('alt') + "?api_key=" + Token,
-            method: "GET",
-            success: function (resp) {
-                $.each(resp, function (indice, eloPerfil) {
+            success: function () {
+                eloPerfil = JSON.parse(localStorage.getItem('tier'));
                     $('.main').append(`
                     <div class="eloM">
                             <span class="eloIconeAA"></span>
                             <span class="ranqueado">
-                            <span class="queue">${eloPerfil.queueType}</span>
+                            <span class="queue">${eloPerfil[0].queueType}</span>
                             </span>
                             <br>
-                            <span class="eloAA">${eloPerfil.tier}</span>
-                            <span class="posicaoAA">${eloPerfil.rank}</span>
+                            <span class="eloAA">${eloPerfil[0].tier}</span>
+                            <span class="posicaoAA">${eloPerfil[0].rank}</span>
                             <br>
-                            <span class="pontosA">PDL ${eloPerfil.leaguePoints}</span>
+                            <span class="pontosA">PDL ${eloPerfil[0].leaguePoints}</span>
                             <br>
                             </div>
                 `);
-                });
                 elo();
                 imgPersonagem();
             },
@@ -52,18 +48,22 @@ $(function () {
 
     function imgPersonagem() {
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/champion-mastery/v3/champion-masteries/by-summoner/" + $(".nome").attr('alt') + "?api_key=" + Token,
-            method: "GET",
+            url: "php/championM.php",
+            type: 'POST',
+            data: {
+                login: JSON.parse(localStorage.getItem('player')).id,
+                local: "br1"
+            },
             async: false,
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (resp) {
-                $.each(resp, function (indice, champ) {
-                    $('.main').append('<div id="art"><img src="http://www.stelar7.no/cdragon/latest/uncentered-splash-art/' + champ.championId + '/0.png"></div>');
+            success: function (champM) {
+                    localStorage.setItem('champion', champM);
+                    championM = JSON.parse(localStorage.getItem('champion'));
+                    $('.main').append('<div id="art"><img src="http://www.stelar7.no/cdragon/latest/uncentered-splash-art/' + championM[0].championId + '/0.png"></div>');
                     $('#carregando').hide();
                     return false;
-                })
             },
             error: function () {
                 console.log('Erro na parte de usuario')
@@ -73,6 +73,8 @@ $(function () {
     function elo() {
         if ($('.eloAA:eq(0)').html() == "SILVER") { // mostra o icone de acordo com a posição no rank
             $('.eloIconeAA:eq(0)').html('<img src="icon/silver.png">');
+        } else if ($('.eloAA:eq(0)').html() == "PLATINUM") {
+            $('.eloIconeAA:eq(0)').html('<img src="icon/PLATINUM.png">');
         } else if ($('.eloAA:eq(0)').html() == "GOLD") {
             $('.eloIconeAA:eq(0)').html('<img src="icon/gold.png">');
         } else if ($('.eloAA:eq(0)').html() == "BRONZE") {

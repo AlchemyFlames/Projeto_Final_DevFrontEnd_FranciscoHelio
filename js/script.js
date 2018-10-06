@@ -17,12 +17,13 @@ $(function () {
     info();
     function info() { //verifica se o srvidor ta online e se tem algum erro
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/status/v3/shard-data?api_key=" + Token + "&jsonp=parseResponse",
-            method: "GET",
+            url: "php/status.php",
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (alert) {
+            success: function (status) {
+                localStorage.setItem('status', status);
+                alert = JSON.parse(localStorage.getItem('status'));
                 $('.status').html('<span id="status">Servidor: ' + alert.services[0].status + ' ' + '</div>')
                 $('.status').append('<br>')
                 $('.status').append('<br>')
@@ -30,7 +31,7 @@ $(function () {
                 stado();
             },
             error: function () {
-                console.log('Erro na parte do perfil')
+                console.log('Erro na parte do info')
             }
         });
     }
@@ -50,35 +51,48 @@ $(function () {
     }
     function perfil() { // perfil principal
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/summoner/v3/summoners/by-name/" + localStorage.getItem('lolnick') + "?api_key=" + Token, //site da api completa com o nick no local storage + a chave
-            method: "GET",
+            url: "php/summoner.php",
+            type: 'POST',
+            data: {
+                login: localStorage.getItem('lolnick'),
+                local: "br1"
+            },
             beforeSend: function () {
                 $('#carregando').show();
             },
-            success: function (response) {
+            success: function (tabs) {
                 $('#carregando').hide();
+                localStorage.setItem('player', tabs);
+                response = JSON.parse(localStorage.getItem('player'));
                 $('#level').html("Level " + response.summonerLevel);
                 $('#nome').html('<span class="nome" alt="' + response.id + '">' + response.name + '</span>');
                 $('#icone').html('<img src="http://ddragon.leagueoflegends.com/cdn/' + version + '/img/profileicon/' + response.profileIconId + '.png">');
                 tier();
             },
             error: function () {
-                console.log('Erro na parte do perfil')
+                console.log('Erro na parte do perfil :(')
             }
         });
     }
     function tier() { //chamado da api onde mostra os pontos
+        response = JSON.parse(localStorage.getItem('player'));
         $.ajax({
-            url: "https://br1.api.riotgames.com/lol/league/v3/positions/by-summoner/" + $(".nome").attr('alt') + "?api_key=" + Token,
-            method: "GET",
+            url: "php/tier.php",
+            type: 'POST',
+            data: {
+                login: response.id,
+                local: "br1"
+            },
+            beforeSend: function () {
+                $('#carregando').show();
+            },
             success: function (resp) {
-                $.each(resp, function (indice, elo) {
-                    $('#id').html("")
-                    $('#elo').html(elo.tier);
-                    $('#posicao').html(elo.rank);
-                    $('#pontos').html(elo.leaguePoints + " PDL")
-                    tierName();
-                });
+                localStorage.setItem('tier', resp);
+                elo = JSON.parse(localStorage.getItem('tier'));
+                $('#elo').html(elo[0].tier);
+                $('#posicao').html(elo[0].rank);
+                $('#pontos').html(elo[0].leaguePoints + " PDL")
+                tierName();
             },
             error: function () {
                 console.log('Erro na parte de liga')
@@ -87,6 +101,8 @@ $(function () {
         function tierName() {
             if ($('#elo').html() == "SILVER") { // mostra o icone de acordo com a posição no rank
                 $('#eloIcone').html('<img src="icon/silver.png">');
+            } else if ($('#elo').html() == "PLATINUM") {
+                $('#eloIcone').html('<img src="icon/PLATINUM.png">');
             } else if ($('#elo').html() == "GOLD") {
                 $('#eloIcone').html('<img src="icon/gold.png">');
             } else if ($('#elo').html() == "BRONZE") {
@@ -119,7 +135,9 @@ $(function () {
                 $('#elo').html("Prata")
             } else if ($('#elo').html() == "BRONZE") {
                 $('#elo').html("Bronze")
-            } else if ($('#elo').html() == "diamond") {
+            } else if ($('#elo').html() == "PLATINUM") {
+                $('#elo').html("Platina")
+            }else if ($('#elo').html() == "diamond") {
                 $('#elo').html("Diamante")
             } else if ($('#elo').html() == "master") {
                 $('#elo').html("Mestre")
